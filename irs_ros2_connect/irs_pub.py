@@ -6,6 +6,7 @@ import pyrealsense2 as rs
 from cv_bridge import CvBridge
 import cv2
 import numpy as np
+
 ##### LEGACY CODE ######
 # pipe= rs.pipeline()
 # config=rs.config()
@@ -27,6 +28,7 @@ class IntelPublisher(Node):
         super().__init__("intel_publisher")
         self.intel_publisher_rgb = self.create_publisher(Image,"rgb_frame",10)
         self.intel_publisher_depth = self.create_publisher(Image,"depth_irs",10)
+        self.intel_publisher_fdepth = self.create_publisher(Image,"filtered_depth",10)
         
         timers=0.5
         self.brg=CvBridge()
@@ -50,7 +52,18 @@ class IntelPublisher(Node):
         depth_frame = fr.get_depth_frame()
         c_img = np.asanyarray(color_frame.get_data())
         d_img = np.asanyarray(depth_frame.get_data())
+        disparity_transform = rs.disparity_transform(True)
+        df_fr = disparity_transform.process(depth_frame)
+        df_img = np.asanyarray(df_fr.get_data())
+
+        #Got uint32 error : so convert it to uint8 for opencv
+        if df_img.dtype == np.uint32:
+            df_img = (df_img / np.max(df_img) * 255).astype(np.uint8)
+
         self.intel_publisher_rgb.publish(self.brg.cv2_to_imgmsg(c_img))
+        self.intel_publisher_depth.publish(self.brg.cv2_to_imgmsg(d_img))
+        self.intel_publisher_fdepth.publish(self.brg.cv2_to_imgmsg(df_img))
+
         self.get_logger().info("RGB PUBLISHED")
 
  

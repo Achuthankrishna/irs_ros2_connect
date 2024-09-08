@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            "intel_pub = irs_ros2_connect.irs_pub:main"
+            "intel_pub = irs_ros2_connect.irs_pub:main",
+            "intel_sub = irs_ros2_connect.irs_sub:main"
         ],
     },
 )
